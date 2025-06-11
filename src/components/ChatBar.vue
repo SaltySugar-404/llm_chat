@@ -2,14 +2,13 @@
   <el-row><!--当前聊天-->
     <el-col :span="24">
       <el-scrollbar>
-        <div class="content" v-for="(message, index) in all_messages" :key="index">{{ message.content }}</div>
+        <div class="content" v-for="(message, index) in all_messages" :key="index">{{ message.role+": "+message.content }}</div>
       </el-scrollbar>
     </el-col>
   </el-row>
   <el-row><!--输入框-->
     <el-col :span="24">
-      <el-input v-model="user_input" type="textarea" :rows="3" placeholder="Enter发送，Shift+Enter换行"
-        @keydown.enter="handleEnter" />
+      <el-input v-model="user_input" type="textarea" :rows="3" @keydown.enter="handleEnter" />
     </el-col>
   </el-row>
 
@@ -17,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import { all_messages, call_model } from '../scripts/chat.ts'
 const user_input = ref("")
 
@@ -27,15 +26,8 @@ const handleEnter = async (event: KeyboardEvent) => {
     user_input.value += '\n'
     return
   }
-  try {
-    await call_model(user_input.value)
-  } catch (error) {
-    console.error('调用模型失败:', error)
-    all_messages.value.push({
-      role: 'assistant',
-      content: '抱歉，我暂时无法回答这个问题。'
-    })
-  }
+ call_model(user_input.value)
+ user_input.value = ""
 }
 </script>
 
