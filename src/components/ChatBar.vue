@@ -50,7 +50,7 @@ const handleEnter = async (event: KeyboardEvent) => {
 .user .bubble {
   background-color: #409EFF;
   color: white;
-  text-align: right;
+  text-align: left;
 }
 
 .assistant,
