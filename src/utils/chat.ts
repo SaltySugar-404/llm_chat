@@ -10,31 +10,31 @@ type Message = {
 export const all_messages = ref<Message[]>([]);
 all_messages.value.push({ role: 'system', content: 'You are a helpful assistant.' });
 //完整添加
-function append_message(role: 'system' | 'user' | 'assistant', content: string) {
+function appendMessage(role: 'system' | 'user' | 'assistant', content: string) {
     all_messages.value.push({ role: role, content: content })
 };
-function pop_message() {
+function popMessage() {
     all_messages.value.pop()
 }
 //逐字添加
-function append_content(new_content: string) {
+function appendContent(new_content: string) {
     all_messages.value[all_messages.value.length - 1].content += new_content;
 }
 //转化为列表
-function plain_messages() {
+function toPlainMessages() {
     return all_messages.value.map(msg => ({
         role: msg.role,
         content: msg.content
     }));
 }
 //请求model
-export async function call_model(content: string) {
-    append_message('user', content);
-    append_message('assistant', '');
+export async function callModel(content: string) {
+    appendMessage('user', content);
+    appendMessage('assistant', '');
     const data = {
         model: "bot-20250220101548-62qmr",
         stream: true,
-        messages: plain_messages()
+        messages: toPlainMessages()
     };
 
     try {
@@ -60,7 +60,7 @@ export async function call_model(content: string) {
                         const parsed = JSON.parse(jsonStr);
                         const delta = parsed.choices[0].delta;
                         if (delta?.content) {
-                            append_content(delta.content);
+                            appendContent(delta.content);
                         }
                     } catch (err) {
                         console.error('JSON parse error:', err, 'Raw data:', jsonStr);
@@ -71,6 +71,6 @@ export async function call_model(content: string) {
         }
     } catch (error) {
         const error_message = (error instanceof Error) ? error.message : String(error);
-        append_content(error_message);
+        appendContent(error_message);
     }
 }

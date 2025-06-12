@@ -13,12 +13,14 @@
   "dependencies": {
     "axios": "^1.9.0",
     "element-plus": "^2.10.1",
+    "markdown-it": "^14.1.0",
     "openai": "^5.3.0",
     "vue": "^3.5.13"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.1",
     "@types/lodash": "^4.17.17",
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.15.31",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/tsconfig": "^0.7.0",

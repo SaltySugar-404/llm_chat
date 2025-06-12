@@ -1,46 +1,95 @@
 <template>
-  <el-row><!-- 当前聊天 -->
-    <el-col :span="24">
-      <el-scrollbar>
-        <div class="message" v-for="(message, index) in all_messages" :key="index" :class="message.role">
-          <span class="bubble">{{ message.content }}</span>
-        </div>
-      </el-scrollbar>
-    </el-col>
-  </el-row>
-
-  <el-row class="input-row">
-    <el-col :span="24">
-      <el-input v-model="user_input" type="textarea" :rows="3" @keydown.enter="handleEnter"></el-input>
-    </el-col>
-  </el-row>
+  <div class="scroll-container" ref="scrollContainer">
+    <div class="bubble_container" v-for="(message, index) in all_messages" :key="index" :class="message.role">
+      <span class="bubble" v-html="toMarkdown(message.content)"></span>
+    </div>
+  </div>
+  <div class="text_input_container">
+    <textarea v-model="user_input" class="text_input" rows="5" @keydown.enter="handleEnter"
+      @keydown.shift.enter.stop></textarea>
+  </div>
 </template>
 
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { all_messages, call_model } from '../scripts/chat.ts'
-const user_input = ref("")
+import { ref, nextTick, watch } from 'vue'
+import MarkdownIt from 'markdown-it'
+import { all_messages, callModel } from '../utils/chat.ts'
 
+const user_input = ref("")
+const scrollContainer = ref<HTMLElement | null>(null)
+
+//处理回车
 const handleEnter = async (event: KeyboardEvent) => {
   event.preventDefault()
   if (event.shiftKey) {
     user_input.value += '\n'
     return
   }
-  call_model(user_input.value)
+  callModel(user_input.value)
   user_input.value = ""
+  console.log(all_messages.value)
 }
+
+const md = new MarkdownIt({
+  breaks: true,
+  html: false,
+  typographer: true
+})
+//转化为markdown格式
+const toMarkdown = (text: string) => {
+  return md.render(text)
+}
+//监听新的用户输入
+watch(all_messages, async () => {
+  await nextTick()
+  if (scrollContainer.value) {
+    scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight
+  }
+})
+//监听新的模型流式输出
+watch(
+  () => all_messages.value[all_messages.value.length - 1]?.content,
+  async () => {
+    await nextTick()
+    if (scrollContainer.value) {
+      scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight
+    }
+  }
+)
 </script>
 
 <style scoped>
-.el-scrollbar {
-  padding-bottom: 100px;
+.scroll-container {
+  max-height: calc(100vh - 160px);
+  overflow-y: scroll;
+  padding-bottom: 160px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.message {
+.scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.bubble_container {
   display: flex;
-  margin: 8px 0;
+  width: 50%;
+  margin: auto;
+}
+
+.bubble {
+  max-width: 80%;
+  width: fit-content;
+  background-color: #303030;
+  color: white;
+  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica", "Arial", sans-serif;
+  font-size: medium;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  word-break: break-word;
+  text-align: left;
 }
 
 .user {
@@ -48,8 +97,6 @@ const handleEnter = async (event: KeyboardEvent) => {
 }
 
 .user .bubble {
-  background-color: #409EFF;
-  color: white;
   text-align: left;
 }
 
@@ -58,37 +105,34 @@ const handleEnter = async (event: KeyboardEvent) => {
   justify-content: flex-start;
 }
 
-.assistant .bubble {
-  background-color: #e6f7ff;
-  color: black;
-  text-align: left;
-}
-
+.assistant .bubble,
 .system .bubble {
-  background-color: #f5f5f5;
-  color: black;
-  font-style: italic;
-}
-
-.bubble {
-  max-width: 60%;
-  width: fit-content;
-  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica", "Arial", sans-serif;
-  padding: 10px 14px;
-  border-radius: 12px;
-  word-break: break-word;
-  white-space: pre-wrap;
   text-align: left;
 }
 
-.input-row {
+.text_input_container {
   position: fixed;
   bottom: 0;
-  left: 0;
+  height: 160px;
   width: 100%;
-  background: white;
-  padding: 10px;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  display: flex;
+  background-color: #1d1d1d;
+  padding-top: 10px;
+}
+
+.text_input {
+  width: 50%;
+  margin: auto;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  /* padding: 10px; */
+  background-color: #303030;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: medium;
+  resize: none;
+  outline: none;
+  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica", "Arial", sans-serif;
 }
 </style>
