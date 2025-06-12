@@ -1,19 +1,21 @@
 <template>
-  <el-row><!--当前聊天-->
+  <el-row><!-- 当前聊天 -->
     <el-col :span="24">
       <el-scrollbar>
-        <div class="content" v-for="(message, index) in all_messages" :key="index">{{ message.role+": "+message.content }}</div>
+        <div class="message" v-for="(message, index) in all_messages" :key="index" :class="message.role">
+          <span class="bubble">{{ message.content }}</span>
+        </div>
       </el-scrollbar>
     </el-col>
   </el-row>
-  <el-row><!--输入框-->
+
+  <el-row class="input-row">
     <el-col :span="24">
-      <el-input v-model="user_input" type="textarea" :rows="3" @keydown.enter="handleEnter" />
+      <el-input v-model="user_input" type="textarea" :rows="3" @keydown.enter="handleEnter"></el-input>
     </el-col>
   </el-row>
-
-
 </template>
+
 
 <script setup lang="ts">
 import { ref } from 'vue'
@@ -26,76 +28,67 @@ const handleEnter = async (event: KeyboardEvent) => {
     user_input.value += '\n'
     return
   }
- call_model(user_input.value)
- user_input.value = ""
+  call_model(user_input.value)
+  user_input.value = ""
 }
 </script>
 
 <style scoped>
-.el-row {
-  margin-bottom: 5px;
-}
-
-.el-col {
-  border-radius: 5px;
-}
-
 .el-scrollbar {
-  height: calc(100vh - 150px);
-  padding: 15px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding-bottom: 100px;
 }
 
-.content {
-  max-width: 85%;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  border-radius: 18px;
-  position: relative;
-  word-wrap: break-word;
-  line-height: 1.5;
-  background-color: bisque;
+.message {
+  display: flex;
+  margin: 8px 0;
 }
 
-.content:has(+ .content[role="user"]),
-.content[role="ai"] {
-  background: #e0edff;
-  align-self: flex-start;
-  border-bottom-left-radius: 4px;
+.user {
+  justify-content: flex-end;
 }
 
-.content[role="user"] {
-  background: #d1f0d7;
-  margin-left: auto;
-  border-bottom-right-radius: 4px;
+.user .bubble {
+  background-color: #409EFF;
+  color: white;
+  text-align: right;
 }
 
-.content {
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  transform-origin: center bottom;
+.assistant,
+.system {
+  justify-content: flex-start;
 }
 
-.content-enter-active,
-.content-leave-active {
-  transition: all 0.3s;
+.assistant .bubble {
+  background-color: #e6f7ff;
+  color: black;
+  text-align: left;
 }
 
-.content-enter-from,
-.content-leave-to {
-  opacity: 0;
-  transform: scale(0.95);
+.system .bubble {
+  background-color: #f5f5f5;
+  color: black;
+  font-style: italic;
 }
 
-.el-textarea {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.bubble {
+  max-width: 60%;
+  width: fit-content;
+  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica", "Arial", sans-serif;
+  padding: 10px 14px;
+  border-radius: 12px;
+  word-break: break-word;
+  white-space: pre-wrap;
+  text-align: left;
 }
 
-.el-textarea :deep(.el-textarea__inner) {
-  padding: 12px 16px;
-  border-radius: 24px;
-  min-height: 50px;
-  resize: none;
+.input-row {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  padding: 10px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }
 </style>
