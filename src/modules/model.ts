@@ -1,40 +1,17 @@
-import { ref } from 'vue'
+import type { Ref } from 'vue'
+import type { Message } from '@/modules/storage'
+import { appendMessage, appendContent, toPlainMessage } from '@/modules/storage'
+
 const api_key = "9d29936c-f9a6-443f-895d-b562c5f280bd";
 const url = 'https://ark.cn-beijing.volces.com/api/v3/bots/chat/completions';
 
-type Message = {
-    role: "system" | "assistant" | "user";
-    content: string;
-};
-
-export const all_messages = ref<Message[]>([]);
-all_messages.value.push({ role: 'system', content: 'You are a helpful assistant.' });
-//完整添加
-function appendMessage(role: 'system' | 'user' | 'assistant', content: string) {
-    all_messages.value.push({ role: role, content: content })
-};
-function popMessage() {
-    all_messages.value.pop()
-}
-//逐字添加
-function appendContent(new_content: string) {
-    all_messages.value[all_messages.value.length - 1].content += new_content;
-}
-//转化为列表
-function toPlainMessages() {
-    return all_messages.value.map(msg => ({
-        role: msg.role,
-        content: msg.content
-    }));
-}
-//请求model
-export async function callModel(content: string) {
-    appendMessage('user', content);
-    appendMessage('assistant', '');
+export async function callModel(chat: Ref<Message[]>, content: string) {
+    appendMessage(chat, 'user', content);
+    appendMessage(chat, 'assistant', '');
     const data = {
         model: "bot-20250220101548-62qmr",
         stream: true,
-        messages: toPlainMessages()
+        messages: toPlainMessage(chat)
     };
 
     try {
@@ -60,7 +37,7 @@ export async function callModel(content: string) {
                         const parsed = JSON.parse(jsonStr);
                         const delta = parsed.choices[0].delta;
                         if (delta?.content) {
-                            appendContent(delta.content);
+                            appendContent(chat, delta.content);
                         }
                     } catch (err) {
                         console.error('JSON parse error:', err, 'Raw data:', jsonStr);
@@ -71,6 +48,6 @@ export async function callModel(content: string) {
         }
     } catch (error) {
         const error_message = (error instanceof Error) ? error.message : String(error);
-        appendContent(error_message);
+        appendContent(chat, error_message);
     }
 }

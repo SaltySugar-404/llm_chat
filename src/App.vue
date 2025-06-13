@@ -1,9 +1,18 @@
 <template>
-  <ChatBar></ChatBar>
+  <el-row>
+    <el-col :span="4">
+      <SideBar></SideBar>
+    </el-col>
+    <el-col :span="20">
+      <ChatBar></ChatBar>
+    </el-col>
+  </el-row>
+
 </template>
 
 <script setup lang="ts">
-import ChatBar from './components/ChatBar.vue'
+import ChatBar from '@/components/ChatBar.vue'
+import SideBar from '@/components/SideBar.vue'
 </script>
 
 
