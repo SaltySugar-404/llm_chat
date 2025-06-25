@@ -1,33 +1,35 @@
 <template>
-  <el-row>
-    <el-col :span="24">
-      <div class="scroll-container" ref="scrollContainer">
-        <div class="bubble_container" v-for="(message, index) in chat" :key="index" :class="message.role">
-          <span class="bubble" v-if="message.role == 'assistant'" v-html="toMarkdown(message.content)"></span>
-          <span class="bubble" v-else>{{ message.content }}</span>
+  <div style="height: 100vh; padding: 5px 10px;">
+    <el-row style="height: 85%;">
+      <el-col style="height: 100%;">
+        <div class="chat_container" ref="scrollContainer">
+          <div v-for="(message, index) in current_chat.messages" :key="index" class="chat_message"
+            :class="message.role">
+            <div class="bubble">
+              {{ message.content }}
+            </div>
+          </div>
         </div>
-      </div>
-    </el-col>
-  </el-row>
-  <el-row>
-    <el-col :span="24">
-      <div class="text_input_container">
-        <textarea v-model="user_input" class="text_input" rows="5" placeholder="Enter发送，Shift+Enter换行"
-          @keydown.enter="handleEnter" @keydown.shift.enter.stop></textarea>
-      </div>
-    </el-col>
-  </el-row>
+      </el-col>
+    </el-row>
+    <el-row style="height: 15%;">
+      <el-col style="height: 100%;">
+        <div class="text_container">
+          <textarea v-model="user_input" class="text_input" rows="5" placeholder="Enter发送，Shift+Enter换行"
+            @keydown.enter="handleEnter" @keydown.shift.enter.stop></textarea>
+        </div>
+      </el-col>
+    </el-row>
+  </div>
 </template>
+
 
 
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
 import MarkdownIt from 'markdown-it'
-import { callModel } from '@/modules/model'
-import { history, type Message, appendMessage } from '@/modules/storage'
+import { current_chat, callModelWithSummary } from '@/modules/main_logic'
 
-const chat = ref<Message[]>([]);
-appendMessage(chat, 'system', 'System: 请你扮演特朗普与用户对话')
 const user_input = ref("")
 
 const handleEnter = async (event: KeyboardEvent) => {
@@ -36,7 +38,8 @@ const handleEnter = async (event: KeyboardEvent) => {
     user_input.value += '\n'
     return
   }
-  callModel(chat, user_input.value)
+  console.log(current_chat.value)
+  callModelWithSummary(user_input.value)
   user_input.value = ""
 }
 //转化为markdown格式
@@ -52,7 +55,7 @@ const toMarkdown = (text: string) => {
 
 const scrollContainer = ref<HTMLElement | null>(null)
 //监听新的用户输入
-watch(chat, async () => {
+watch(current_chat, async () => {
   await nextTick()
   if (scrollContainer.value) {
     scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight
@@ -60,7 +63,7 @@ watch(chat, async () => {
 })
 //监听新的模型流式输出
 watch(
-  () => chat.value[chat.value.length - 1]?.content,
+  () => current_chat.value.messages[current_chat.value.messages.length - 1]?.content,
   async () => {
     await nextTick()
     if (scrollContainer.value) {
@@ -71,85 +74,74 @@ watch(
 </script>
 
 <style scoped>
-.scroll-container {
-  top: 0;
+.el-row {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  height: calc(100vh - 160px);
+.el-col {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  overflow-y: scroll;
-  -ms-overflow-style: none;
+.chat_container {
+  height: 100%;
+  width: 50%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   scrollbar-width: none;
 }
 
-.scroll-container::-webkit-scrollbar {
-  display: none;
-}
-
-.bubble_container {
-  margin: auto;
-
+.chat_message {
   display: flex;
-  width: 50%;
+  margin-bottom: 12px;
+  max-width: 100%;
 }
 
-.bubble {
-  max-width: 80%;
-  width: fit-content;
-
-  padding: 10px;
-  margin-bottom: 10px;
-
-  border-radius: 10px;
-  color: white;
-  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica", "Arial", sans-serif;
-  font-size: medium;
-
-  word-break: break-word;
-  text-align: left;
-}
-
-.bubble:first-child {
-  margin-top: 20px;
-}
-
-.user {
+.chat_message.user {
   justify-content: flex-end;
 }
 
-.user .bubble {
-  background-color: #303030;
-  text-align: left;
-  white-space: pre-line;
-}
-
-.assistant,
-.system {
+.chat_message.assistant {
   justify-content: flex-start;
 }
 
-.assistant .bubble,
-.system .bubble {
-  text-align: left;
+.bubble {
+  padding: 10px 15px;
+  border-radius: 18px;
+  max-width: 70%;
+  word-wrap: break-word;
+  line-height: 1.5;
+  font-size: 15px;
+  background-color: #303030;
+  color: white;
 }
 
-.text_input_container {
-  bottom: 0;
+.chat_message.user .bubble {
+  border-bottom-right-radius: 4px;
+}
 
-  height: 160px;
-  width: 100%;
+.chat_message.assistant .bubble {
+  border-bottom-left-radius: 4px;
+}
 
+.text_container {
+  height: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  width: 50%;
+  overflow-y: auto;
   display: flex;
-  background-color: #1d1d1d;
+  flex-direction: column;
 }
 
 .text_input {
-  margin: auto;
-
-  width: 50%;
-  padding-top: 10px;
-  padding-bottom: 10px;
   padding: 10px;
-
   background-color: #303030;
   color: white;
   border: none;
@@ -159,5 +151,4 @@ watch(
   outline: none;
   font-family: "PingFang SC", "Microsoft YaHei", "Helvetica", "Arial", sans-serif;
 }
-</style>
-../modules/chat.ts
+</style>@/modules/main@/modules/main_logic
