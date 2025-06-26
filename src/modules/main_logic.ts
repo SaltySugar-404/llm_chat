@@ -1,34 +1,112 @@
 import type { Ref } from 'vue';
 import { ref } from 'vue';
+import { current_role } from './role'
 
-// content -> message -> chat -> history
+// content = message < chat < history
 export type Message = {
     role: 'system' | 'assistant' | 'user';
     content: string;
 };
+
 export type Chat = {
     messages: Message[];
+    role: string;
     summary: string;
     timestamp: number;
 };
+//可存储的聊天历史
 export const history = ref<Chat[]>([]);
 
 function createNewChat(): Chat {
     return {
         messages: [
-            { role: 'system', content: '请你扮演特朗普与用户对话' }
+            { role: 'system', content: current_role.value.prompt },
+            { role: 'assistant', content: current_role.value.welcome }
         ],
-        summary: 'None',
+        role: 'None',
+        summary: '新的对话',
         timestamp: Date.now(),
     }
 }
-
-//至少一个chat
+//当前操作的chat
 export const current_chat: Ref<Chat> = ref(createNewChat());
-history.value.push(current_chat.value);
+
+//对话存储
+const LOCAL_STORAGE_KEY = 'chat_history';
+
+function saveHistory() {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(history.value));
+}
+
+function loadHistory() {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (saved) {
+        try {
+            const parsed: Chat[] = JSON.parse(saved);
+            history.value = parsed;
+            current_chat.value = history.value[history.value.length - 1];
+        } catch (err) {
+            console.error('历史记录解析失败:', err);
+        }
+    } else {
+        history.value = [createNewChat()];
+        current_chat.value = history.value[0];
+    }
+}
+
+loadHistory()
+
+function updateTimestamp() {
+    current_chat.value.timestamp = Date.now();
+}
+
+function getLatestChat(): Chat | undefined {
+    return history.value.reduce((latest, chat) =>
+        chat.timestamp > latest.timestamp ? chat : latest,
+        history.value[0]
+    );
+}
+
+export function newChat() {
+    const latestChat = getLatestChat();
+    if (!latestChat) return;
+    const hasUserInput = latestChat.messages.some(msg => msg.role === 'user');
+    if (!hasUserInput) return;
+    const new_chat = createNewChat();
+    history.value.push(new_chat);
+    current_chat.value = new_chat
+}
+
+export function switchChat(timestamp: number) {
+    const target = history.value.find(chat => chat.timestamp === timestamp);
+    if (target) current_chat.value = target;
+}
+
+export function setChatSummary(summary: string) {
+    current_chat.value.summary = summary;
+    saveHistory();
+}
+
+export function deleteChat(timestamp: number) {
+    const index = history.value.findIndex(chat => chat.timestamp === timestamp);
+    if (index !== -1) {
+        const isCurrent = current_chat.value.timestamp === timestamp;
+        history.value.splice(index, 1);
+        if (history.value.length === 0) {
+            const newChat = createNewChat();
+            history.value.push(newChat);
+            current_chat.value = newChat;
+        } else if (isCurrent) {
+            current_chat.value = getLatestChat()!;
+        }
+        saveHistory();
+    }
+}
 
 export function appendMessage(role: 'system' | 'user' | 'assistant', content: string) {
     current_chat.value.messages.push({ role, content: content });
+    updateTimestamp();
+    saveHistory();
 }
 
 export function popMessage() {
@@ -43,23 +121,6 @@ export function appendContent(new_content: string) {
 
 export function toPlainMessage(): Message[] {
     return current_chat.value.messages.map(({ role, content }) => ({ role, content }));
-}
-
-export function setChatSummary(summary: string) {
-    current_chat.value.summary = summary;
-}
-
-export function newChat() {
-    const latestChat = history.value[history.value.length - 1];
-    const hasUserInput = latestChat.messages.some(msg => msg.role === 'user');
-    if (!hasUserInput) return;
-    const new_chat: Ref<Chat> = ref(createNewChat());
-    history.value.push(new_chat.value);
-}
-
-export function switchChat(timestamp: number) {
-    const target = history.value.find(chat => chat.timestamp === timestamp);
-    if (target) current_chat.value = target;
 }
 
 //model
@@ -84,7 +145,6 @@ export async function callModel(content: string) {
             },
             body: JSON.stringify(data)
         });
-        // appendMessage('assistant', '');
         const reader = response.body?.getReader();
         const decoder = new TextDecoder();
         while (true && reader) {
@@ -144,11 +204,13 @@ export async function getSummary(content: string) {
 }
 
 export async function callModelWithSummary(message: string) {
-    if (current_chat.value.summary == 'None') {
+    if (current_chat.value.summary === '新的对话') {
         const modelPromise = callModel(message);
         const summaryPromise = getSummary(message);
         await modelPromise;
         setChatSummary(await summaryPromise);
     }
-    else callModel(message)
+    else callModel(message);
+    updateTimestamp();
+    saveHistory();
 }

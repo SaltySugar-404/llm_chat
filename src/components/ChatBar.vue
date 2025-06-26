@@ -1,10 +1,10 @@
 <template>
-  <div style="height: 100vh; padding: 5px 10px;">
+  <div style="height: 100vh;">
     <el-row style="height: 85%;">
       <el-col style="height: 100%;">
         <div class="chat_container" ref="scrollContainer">
-          <div v-for="(message, index) in current_chat.messages" :key="index" class="chat_message"
-            :class="message.role">
+          <div v-for="(message, index) in current_chat.messages.filter(m => m.role !== 'system')" :key="index"
+            class="chat_message" :class="message.role">
             <div class="bubble">
               {{ message.content }}
             </div>
@@ -23,14 +23,13 @@
   </div>
 </template>
 
-
-
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
 import MarkdownIt from 'markdown-it'
 import { current_chat, callModelWithSummary } from '@/modules/main_logic'
 
 const user_input = ref("")
+const isLoading = ref(false)
 
 const handleEnter = async (event: KeyboardEvent) => {
   event.preventDefault()
@@ -38,10 +37,22 @@ const handleEnter = async (event: KeyboardEvent) => {
     user_input.value += '\n'
     return
   }
-  console.log(current_chat.value)
-  callModelWithSummary(user_input.value)
+
+  if (isLoading.value || !user_input.value.trim()) return
+
+  isLoading.value = true
+  const input = user_input.value
   user_input.value = ""
+
+  try {
+    await callModelWithSummary(input)
+  } catch (err) {
+    console.error("请求失败", err)
+  } finally {
+    isLoading.value = false
+  }
 }
+
 //转化为markdown格式
 const md = new MarkdownIt({
   breaks: true,
@@ -76,13 +87,13 @@ watch(
 <style scoped>
 .el-row {
   height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
 }
 
 .el-col {
   height: 100%;
+  width: 100%;
+  padding: 5px 10px;
   display: flex;
   justify-content: center;
   align-items: center;
