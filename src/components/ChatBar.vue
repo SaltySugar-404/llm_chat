@@ -1,5 +1,5 @@
 <template>
-  <div style="height: 100vh;">
+  <div style="height: 100vh; padding: 10px 0px;">
     <el-row style="height: 85%;">
       <el-col style="height: 100%;">
         <div class="chat_container" ref="scrollContainer">
@@ -144,7 +144,6 @@ watch(
 
 .text_container {
   height: 100%;
-  padding: 10px;
   margin-top: 10px;
   width: 100%;
   min-width: 400px;

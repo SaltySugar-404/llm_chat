@@ -178,7 +178,7 @@ export async function callModel(content: string) {
 
 export async function getSummary(content: string) {
     const chat = ref<Message[]>([]);
-    chat.value.push({ 'role': 'system', 'content': '你是一个总结助手，只负责提取信息，不推理、不回答问题。请使用10个以内的汉字，总结用户内容的核心主题或思想' })
+    chat.value.push({ 'role': 'system', 'content': '你是一个总结助手，只负责提取信息，不推理、不回答问题。请使用10个以内的汉字，总结用户内容的核心主题或思想。如果内容长度小于10个字，则直接复制' })
     chat.value.push({ 'role': 'user', 'content': content })
     const data = {
         model: model,
