@@ -3,7 +3,7 @@
         <el-row style="height: 15%;">
             <el-col>
                 <el-avatar :size="120" :src="current_role.image_path"
-                    style="border: 5px solid white; box-sizing: border-box;" alt="Model Avatar" />
+                    style="border: 5px solid #303030; box-sizing: border-box;" alt="Model Avatar" />
             </el-col>
         </el-row>
         <el-row style="height: 5%;">
@@ -158,6 +158,6 @@ function onDeleteChat(timestamp: number) {
 }
 
 .delete_button:hover {
-    background-color: #555;
+    background-color: #b52d2d;
 }
 </style>

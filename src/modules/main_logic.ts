@@ -17,7 +17,7 @@ export type Chat = {
 //可存储的聊天历史
 export const history = ref<Chat[]>([]);
 
-const default_role_name = 'Donald Trump'
+const default_role_name = 'DeepSeek'
 
 //新建对话，基于当前角色
 function createNewChat(role_name: string = default_role_name): Chat {

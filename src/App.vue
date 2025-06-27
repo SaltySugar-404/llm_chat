@@ -4,7 +4,7 @@
       <SideBar />
     </div>
     <div style="flex: 1;"></div>
-    <div style="width: 60%; min-width: 400px; height: 100%;">
+    <div style="width: 50%; min-width: 400px; height: 100%;">
       <ChatBar />
     </div>
     <div style="flex: 1;"></div>
