@@ -8,22 +8,26 @@
         </el-row>
         <el-row style="height: 5%;">
             <el-col>
-                <select v-model="selectedRole" @change="onRoleChange" class="select_role">
-                    <option v-for="role in available_roles" :key="role" :value="role">{{ role }}</option>
+                <select v-model="selected_role_name" @change="onRoleChange" class="select_role"
+                    :disabled="is_role_select_disabled">
+                    <option v-for="role in available_roles" :key="role" :value="role">
+                        {{ role }}
+                    </option>
                 </select>
             </el-col>
         </el-row>
         <el-row style="height: 5%;">
             <el-col>
-                <el-button class="new_chat_button" @click="newChat">New Chat</el-button>
+                <el-button class="new_chat_button" @click="onNewChat">新建对话</el-button>
             </el-col>
         </el-row>
         <el-row style="height: 65%;">
             <el-col>
                 <el-scrollbar style="height: 100%; width: 100%;">
                     <div v-for="chat in [...history].sort((a, b) => b.timestamp - a.timestamp)" :key="chat.timestamp"
-                        class="chat" @mouseenter="hoveredChat = chat.timestamp" @mouseleave="hoveredChat = null"
-                        :style="{ backgroundColor: hoveredChat === chat.timestamp ? '#303030' : 'transparent' }">
+                        class="chat" @mouseenter="chat_timesatmp_under_mouse = chat.timestamp"
+                        @mouseleave="chat_timesatmp_under_mouse = null"
+                        :style="{ backgroundColor: chat_timesatmp_under_mouse === chat.timestamp ? '#303030' : 'transparent' }">
                         <el-row style="width: 100%">
                             <el-col :span="20">
                                 <div style="flex: 1; cursor: pointer;" @click="onSelectChat(chat.timestamp)">
@@ -31,8 +35,8 @@
                                 </div>
                             </el-col>
                             <el-col :span="4">
-                                <el-button v-if="hoveredChat === chat.timestamp" class="delete_button" :icon="Delete"
-                                    circle @click="deleteChat(chat.timestamp)" />
+                                <el-button v-if="chat_timesatmp_under_mouse === chat.timestamp" class="delete_button"
+                                    :icon="Delete" circle @click="onDeleteChat(chat.timestamp)" />
                             </el-col>
                         </el-row>
                     </div>
@@ -43,24 +47,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { history, switchChat, newChat, deleteChat } from '../modules/main_logic';
-import { current_role, switchRole, available_roles } from '../modules/role';
+import { ref, computed } from 'vue';
+import { history, loadHistory, switchChat, newChat, deleteChat, current_chat } from '../modules/main_logic';
+import { current_role, loadRole, switchRole, available_roles } from '../modules/role';
 import { Delete } from '@element-plus/icons-vue';
 
-const selectedRole = ref('Evil Neuro');
-const hoveredChat = ref<number | null>(null);
+loadHistory()
+const selected_role_name = ref(current_chat.value.role_name);
+loadRole(current_chat.value.role_name)
 
-const onRoleChange = async (event: Event) => {
-    await switchRole(selectedRole.value);
-};
+function onNewChat() {
+    newChat(current_chat.value.role_name);
+}
 
-onMounted(() => {
-    switchRole(selectedRole.value);
-});
+function onRoleChange() {
+    switchRole(selected_role_name.value);
+    current_chat.value.role_name = current_role.value.role_name;
+    current_chat.value.messages[0].content = current_role.value.prompt;
+    current_chat.value.messages[1].content = current_role.value.welcome;
+}
+
+const is_role_select_disabled = computed(() => current_chat.value.messages.length > 2);
+
+const chat_timesatmp_under_mouse = ref<number | null>(null);
 
 function onSelectChat(timestamp: number) {
     switchChat(timestamp);
+    loadRole(current_chat.value.role_name);
+    selected_role_name.value = current_chat.value.role_name;
+    if (history.value[history.value.length - 1].messages.length === 2) history.value.pop();
+}
+
+function onDeleteChat(timestamp: number) {
+    deleteChat(timestamp);
+    loadRole(current_chat.value.role_name);
+    selected_role_name.value = current_chat.value.role_name;
 }
 </script>
 
@@ -120,7 +141,7 @@ function onSelectChat(timestamp: number) {
 .chat {
     width: 100%;
     height: 40px;
-    margin-bottom: 10px;
+    margin: 10px 0px;
     border-radius: 10px;
     display: flex;
     align-items: center;

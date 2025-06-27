@@ -101,7 +101,8 @@ watch(
 
 .chat_container {
   height: 100%;
-  width: 50%;
+  width: 100%;
+  min-width: 400px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -145,7 +146,8 @@ watch(
   height: 100%;
   padding: 10px;
   margin-top: 10px;
-  width: 50%;
+  width: 100%;
+  min-width: 400px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;

@@ -1,6 +1,6 @@
 import type { Ref } from 'vue';
 import { ref } from 'vue';
-import { current_role } from './role'
+import { current_role, loadRole } from './role'
 
 // content = message < chat < history
 export type Message = {
@@ -10,21 +10,25 @@ export type Message = {
 
 export type Chat = {
     messages: Message[];
-    role: string;
+    role_name: string;
     summary: string;
     timestamp: number;
 };
 //可存储的聊天历史
 export const history = ref<Chat[]>([]);
 
-function createNewChat(): Chat {
+const default_role_name = 'Donald Trump'
+
+//新建对话，基于当前角色
+function createNewChat(role_name: string = default_role_name): Chat {
+    loadRole(role_name);
     return {
         messages: [
             { role: 'system', content: current_role.value.prompt },
             { role: 'assistant', content: current_role.value.welcome }
         ],
-        role: 'None',
-        summary: '新的对话',
+        role_name: role_name,
+        summary: '未命名',
         timestamp: Date.now(),
     }
 }
@@ -38,13 +42,14 @@ function saveHistory() {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(history.value));
 }
 
-function loadHistory() {
+export function loadHistory() {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (saved) {
         try {
             const parsed: Chat[] = JSON.parse(saved);
             history.value = parsed;
             current_chat.value = history.value[history.value.length - 1];
+            console.log(current_chat)
         } catch (err) {
             console.error('历史记录解析失败:', err);
         }
@@ -53,8 +58,6 @@ function loadHistory() {
         current_chat.value = history.value[0];
     }
 }
-
-loadHistory()
 
 function updateTimestamp() {
     current_chat.value.timestamp = Date.now();
@@ -67,12 +70,12 @@ function getLatestChat(): Chat | undefined {
     );
 }
 
-export function newChat() {
+export function newChat(role_name: string) {
     const latestChat = getLatestChat();
     if (!latestChat) return;
     const hasUserInput = latestChat.messages.some(msg => msg.role === 'user');
     if (!hasUserInput) return;
-    const new_chat = createNewChat();
+    const new_chat = createNewChat(role_name);
     history.value.push(new_chat);
     current_chat.value = new_chat
 }
@@ -204,7 +207,7 @@ export async function getSummary(content: string) {
 }
 
 export async function callModelWithSummary(message: string) {
-    if (current_chat.value.summary === '新的对话') {
+    if (current_chat.value.summary === '未命名') {
         const modelPromise = callModel(message);
         const summaryPromise = getSummary(message);
         await modelPromise;

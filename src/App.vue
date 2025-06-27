@@ -1,15 +1,17 @@
 <template>
-  <div style="height: 100vh;overflow: hidden;">
-    <el-row style="height: 100%;">
-      <el-col :span="3">
-        <SideBar></SideBar>
-      </el-col>
-      <el-col :span="21">
-        <ChatBar></ChatBar>
-      </el-col>
-    </el-row>
+  <div style="height: 100vh; overflow-x: auto; display: flex; min-width: 600px;overflow-y: hidden;overflow-x: hidden;">
+    <div style="width: 12%; min-width: 200px; height: 100%;">
+      <SideBar />
+    </div>
+    <div style="flex: 1;"></div>
+    <div style="width: 60%; min-width: 400px; height: 100%;">
+      <ChatBar />
+    </div>
+    <div style="flex: 1;"></div>
   </div>
 </template>
+
+
 
 <script setup lang="ts">
 import ChatBar from '@/components/ChatBar.vue'
