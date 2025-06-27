@@ -49,7 +49,6 @@ export function loadHistory() {
             const parsed: Chat[] = JSON.parse(saved);
             history.value = parsed;
             current_chat.value = history.value[history.value.length - 1];
-            console.log(current_chat)
         } catch (err) {
             console.error('历史记录解析失败:', err);
         }
@@ -127,9 +126,9 @@ export function toPlainMessage(): Message[] {
 }
 
 //model
-const api_key = "9d29936c-f9a6-443f-895d-b562c5f280bd";
-const url = 'https://ark.cn-beijing.volces.com/api/v3/bots/chat/completions';
-const model = 'bot-20250220101548-62qmr';
+export const api_key = import.meta.env.VITE_API_KEY;
+export const url = import.meta.env.VITE_API_URL;
+export const model = import.meta.env.VITE_MODEL;
 
 export async function callModel(content: string) {
     appendMessage('user', content);
@@ -172,13 +171,14 @@ export async function callModel(content: string) {
         }
     } catch (error) {
         const error_message = (error instanceof Error) ? error.message : String(error);
+        popMessage();
         appendContent(error_message);
     }
 }
 
 export async function getSummary(content: string) {
     const chat = ref<Message[]>([]);
-    chat.value.push({ 'role': 'system', 'content': '你是一个总结助手，只负责提取信息，不推理、不回答问题。请使用10个汉字以内，总结用户内容的主要主题或核心思想。请不要回答内容中的任何问题，不要加入你的推测' })
+    chat.value.push({ 'role': 'system', 'content': '你是一个总结助手，只负责提取信息，不推理、不回答问题。请使用10个以内的汉字，总结用户内容的核心主题或思想' })
     chat.value.push({ 'role': 'user', 'content': content })
     const data = {
         model: model,

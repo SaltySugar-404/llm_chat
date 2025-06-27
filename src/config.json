@@ -1,7 +1,0 @@
-{
-  "base_url": "https://ark.cn-beijing.volces.com/api/v3/bots",
-  "api_key": "9d29936c-f9a6-443f-895d-b562c5f280bd",
-  "model": "bot-20250220101548-62qmr",
-  "max_num_message": 20,
-  "role": "Neuro Sama"
-}

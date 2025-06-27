@@ -52,9 +52,9 @@ import { history, loadHistory, switchChat, newChat, deleteChat, current_chat } f
 import { current_role, loadRole, switchRole, available_roles } from '../modules/role';
 import { Delete } from '@element-plus/icons-vue';
 
-loadHistory()
+loadHistory();
+loadRole(current_chat.value.role_name);
 const selected_role_name = ref(current_chat.value.role_name);
-loadRole(current_chat.value.role_name)
 
 function onNewChat() {
     newChat(current_chat.value.role_name);
